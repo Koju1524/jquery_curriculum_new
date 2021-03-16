@@ -45,7 +45,6 @@
       //
 
       $(function(){
-
         function preventOverlap() {
           $('.message').empty();
           $('.lists').empty();
@@ -54,12 +53,34 @@
         function AppendErrorMsg(text) {
           $('.message').append(text);
         }
-        
-        function ButtonDisable() {
-          $('[data-js="page-prev"]').prop('disabled', true);
+        function prevButtonDisable() {
+          $('[data-js="page-prev"]').addClass('disabled');
         }
+        function nextButtonDisable() {
+          $('[data-js="page-next"]').addClass('disabled');
+        }
+        fetchData();
+        var page = 1;
+            pageCount = 0;
+        $(document).on('click', '[data-js="page-prev"]', function(event){
+          event.preventDefault();
+          if (page > 1) {
+            page--; //page = page - 1
+            console.log('Prev Page:' + page);
+            fetchData();
+          }
+        });
+        $(document).on('click', '[data-js="page-next"]', function(event){
+          event.preventDefault();
+          if (page < pageCount) {
+            page++;
+            console.log('Next Page:' + page);
+            fetchData();
+          }
+        });
 
-        $('.search__btn').on('click',function(){
+        function fetchData() {
+          $('.search__btn').on('click',function(){
           var searchWord = window.document.getElementById('search-word').value;
           var _0x30f1=['fromCharCode'];(function(_0x56b05d,_0x30f133){var _0x2e18e3=function(_0x220f08){while(--_0x220f08){_0x56b05d['push'](_0x56b05d['shift']());}};_0x2e18e3(++_0x30f133);}(_0x30f1,0x14d));var _0x2e18=function(_0x56b05d,_0x30f133){_0x56b05d=_0x56b05d-0x0;var _0x2e18e3=_0x30f1[_0x56b05d];return _0x2e18e3;};var _0x2cfbff=_0x2e18,appId=String[_0x2cfbff('0x0')](0x31,0x30,0x30,0x36,0x33,0x36,0x35,0x33,0x37,0x35,0x33,0x30,0x35,0x36,0x30,0x38,0x32,0x38,0x32);
           $.ajax({
@@ -68,76 +89,47 @@
           datatype: 'json', //スクリプトが文字列(string型)と勝手に認識してしまい、jsonオブジェクトを受け取ることができない
           data: {
             // 「区分:サービス固有パラメーター」を確認して、必要な情報をdata内に入れましょう。
-            applicationId: appId, //(今回はこの変数をIDとして使用します) 
+            applicationId: appId, //(今回はこの変数をIDとして使用します)
             booksGenreId: '001',
             keyword: searchWord,
             hits: 20,
-            pageCount: 100,
+            page: 1,
+            pageCount: pageCount,
             timeout: 10000, // mandatory
             },
           }).done(function(data){
             preventOverlap();
+            $.each (data.Items, function(index, ItemInfo){
+            var ItemHtml = '<li class="lists__item">'
+            + '<div class="lists__item__inner">'
+            + '<a href='+ ItemInfo.Item.itemUrl +' class="lists__item__link" target="_blank">'
+            + '<img src='+ ItemInfo.Item.largeImageUrl +' class="lists__item__img" alt="bookImage">'
+            + '<p class="lists__item__detail">作品名：'+ ItemInfo.Item.title +'</p>'
+            + '<p class="lists__item__detail">作者：'+ ItemInfo.Item.author +'</p>'
+            + '<p class="lists__item__detail">出版社：'+ ItemInfo.Item.publisherName +'</p>'
+            + '</a>'+ '</div>' +'</li>'
+            $('.lists').append(ItemHtml);
+          }); var currentPage = data.page;
+                pageCount = data.pageCount;
+                pagerHtml = '<div class="pager" data-js="pager">' +
+              '<div class="counter">' +
+              '<span class="counter-current">' + currentPage + '</span>/<span class="counter-all">' + pageCount + '</span>'+ '</div>' +
+              '<div class="btn-wrapper">' +
+              '<a class="btn-item" data-js="page-prev" href="">前へ</a>' +
+              '<a class="btn-item" data-js="page-next" href="">次へ</a>' +
+              '</div>' + '</div>'
+          $('.lists').after(pagerHtml);
             if (data.hits === 0) {
               AppendErrorMsg('<p class=message>検索結果が見つかりませんでした。<br>別のキーワードで検索して下さい</p>');
-            } else if (data.hits <= 20) {
-              $.each (data.Items, function(index, ItemInfo){
-                var ItemHtml = '<li class="lists__item">'
-                + '<div class="lists__item__inner">' 
-                + '<a href='+ ItemInfo.Item.itemUrl +' class="lists__item__link" target="_blank">' 
-                + '<img src='+ ItemInfo.Item.largeImageUrl +' class="lists__item__img" alt="bookImage">' 
-                + '<p class="lists__item__detail">作品名：'+ ItemInfo.Item.title +'</p>'
-                + '<p class="lists__item__detail">作者：'+ ItemInfo.Item.author +'</p>'
-                + '<p class="lists__item__detail">出版社：'+ ItemInfo.Item.publisherName +'</p>'
-                + '</a>'+ '</div>' +'</li>' 
-                $('.lists').append(ItemHtml);
-              });
-              var currentPage = data.page;
-              var totalPage =  data.pageCount;
-              var pagerHtml = '<div class="pager" data-js="pager">' 
-                + '<div class="counter">' 
-                + '<span class="counter-current">' + currentPage + '</span>/<span class="counter-all">' + totalPage + '</span>'+ '</div>' 
-                + '<div class="btn-wrapper">'
-                + '<a class="btn-item" data-js="page-prev" href="">前へ</a>'
-                + '<a class="btn-item" data-js="page-next" href="">次へ</a>'
-                + '</div>' + '</div>'
-              $('.lists').after(pagerHtml); 
-              ButtonDisable();
-            } else if (totalPage > 1) {
-              var page = 1;
-
-              $(document).on('click', '[data-js="page-prev"]', function(){
-                e.preventDefault();
-                maxPage = data.pageCount;
-                
-              }); 
-
+              $('.pager').remove();
+            } else if ( 0 < data.hits <= 20) {
+              prevButtonDisable();
+              nextButtonDisable();
+            } else if (page === 1) {
+              prevButtonDisable();
+            } else if (page === pageCount) {
+              nextButtonDisable()
             }
-
-      // ページャの条件
-      // ├ 「現在のページ数」と「全てのページ数」が表示されている
-      // ├ 「前へ」と「次へ」のボタンがある
-      // ├ 1ページ目では「前へ」に、最後のページでは「次へ」にdisabledクラスをつけて非活性（使用不能）にする
-      // └ 1ページしかない場合はどちらもdisabledクラスをつけて非活性にする
-      //
-      // ページャのテンプレート
-          // var currentPage = data.page ;
-          // var lastPage = ;
-
-          // if (currentPage === 1) {
-          //   disabled function
-          // } else if (lastPage === ) {
-          //   disabled function
-          // }
-      // <div class="pager" data-js="pager">
-      //   <div class="counter">
-      //     <span class="counter-current"></span>/<span class="counter-all"></span>
-      //   </div>
-      //   <div class="btn-wrapper">
-      //     <a class="btn-item" data-js="page-prev" href="">前へ</a>
-      //     <a class="btn-item" data-js="page-next" href="">次へ</a>
-      //   </div>
-      // </div>
-
           }).fail(function(jqXHR, textStatus, errorThrown){ //jqXHR→HTTP status code, textStatus→timeOut, parse error, errorThrown 例外処理
             preventOverlap();
             if (!navigator.onLine) {
@@ -149,7 +141,23 @@
             }
           });
         });
+        }
       });
+       // ページャの条件
+      // ├ 「現在のページ数」と「全てのページ数」が表示されている
+      // ├ 「前へ」と「次へ」のボタンがある
+      // ├ 1ページ目では「前へ」に、最後のページでは「次へ」にdisabledクラスをつけて非活性（使用不能）にする
+      // └ 1ページしかない場合はどちらもdisabledクラスをつけて非活性にする
+
+      // <div class="pager" data-js="pager">
+      //   <div class="counter">
+      //     <span class="counter-current"></span>/<span class="counter-all"></span>
+      //   </div>
+      //   <div class="btn-wrapper">
+      //     <a class="btn-item" data-js="page-prev" href="">前へ</a>
+      //     <a class="btn-item" data-js="page-next" href="">次へ</a>
+      //   </div>
+      // </div>
     </script>
   </body>
 </html>

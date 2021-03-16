@@ -59,15 +59,20 @@
         function nextButtonDisable() {
           $('[data-js="page-next"]').addClass('disabled');
         }
-        fetchData();
+
+        $('.search__btn').on('click',function(){
+          fetchData();
+        });
+
         var page = 1;
             pageCount = 0;
         $(document).on('click', '[data-js="page-prev"]', function(event){
           event.preventDefault();
           if (page > 1) {
-            page--; //page = page - 1
+            page--;
             console.log('Prev Page:' + page);
             fetchData();
+            console.log('prev');
           }
         });
         $(document).on('click', '[data-js="page-next"]', function(event){
@@ -76,12 +81,11 @@
             page++;
             console.log('Next Page:' + page);
             fetchData();
+            console.log('next');
           }
         });
-
         function fetchData() {
-          $('.search__btn').on('click',function(){
-          var searchWord = window.document.getElementById('search-word').value;
+          var searchWord = $('#search-word').val();
           var _0x30f1=['fromCharCode'];(function(_0x56b05d,_0x30f133){var _0x2e18e3=function(_0x220f08){while(--_0x220f08){_0x56b05d['push'](_0x56b05d['shift']());}};_0x2e18e3(++_0x30f133);}(_0x30f1,0x14d));var _0x2e18=function(_0x56b05d,_0x30f133){_0x56b05d=_0x56b05d-0x0;var _0x2e18e3=_0x30f1[_0x56b05d];return _0x2e18e3;};var _0x2cfbff=_0x2e18,appId=String[_0x2cfbff('0x0')](0x31,0x30,0x30,0x36,0x33,0x36,0x35,0x33,0x37,0x35,0x33,0x30,0x35,0x36,0x30,0x38,0x32,0x38,0x32);
           $.ajax({
           url: 'https://app.rakuten.co.jp/services/api/BooksTotal/Search/20130522',
@@ -100,18 +104,18 @@
           }).done(function(data){
             preventOverlap();
             $.each (data.Items, function(index, ItemInfo){
-            var ItemHtml = '<li class="lists__item">'
-            + '<div class="lists__item__inner">'
-            + '<a href='+ ItemInfo.Item.itemUrl +' class="lists__item__link" target="_blank">'
-            + '<img src='+ ItemInfo.Item.largeImageUrl +' class="lists__item__img" alt="bookImage">'
-            + '<p class="lists__item__detail">作品名：'+ ItemInfo.Item.title +'</p>'
-            + '<p class="lists__item__detail">作者：'+ ItemInfo.Item.author +'</p>'
-            + '<p class="lists__item__detail">出版社：'+ ItemInfo.Item.publisherName +'</p>'
-            + '</a>'+ '</div>' +'</li>'
+            var ItemHtml = '<li class="lists__item">' +
+            '<div class="lists__item__inner">' +
+            '<a href='+ ItemInfo.Item.itemUrl +' class="lists__item__link" target="_blank">' +
+            '<img src='+ ItemInfo.Item.largeImageUrl +' class="lists__item__img" alt="bookImage">' +
+            '<p class="lists__item__detail">作品名：'+ ItemInfo.Item.title +'</p>' +
+            '<p class="lists__item__detail">作者：'+ ItemInfo.Item.author +'</p>' +
+            '<p class="lists__item__detail">出版社：'+ ItemInfo.Item.publisherName +'</p>' +
+            '</a>'+ '</div>' +'</li>'
             $('.lists').append(ItemHtml);
           }); var currentPage = data.page;
-                pageCount = data.pageCount;
-                pagerHtml = '<div class="pager" data-js="pager">' +
+                  pageCount = data.pageCount;
+                  pagerHtml = '<div class="pager" data-js="pager">' +
               '<div class="counter">' +
               '<span class="counter-current">' + currentPage + '</span>/<span class="counter-all">' + pageCount + '</span>'+ '</div>' +
               '<div class="btn-wrapper">' +
@@ -119,15 +123,15 @@
               '<a class="btn-item" data-js="page-next" href="">次へ</a>' +
               '</div>' + '</div>'
           $('.lists').after(pagerHtml);
-            if (data.hits === 0) {
+            if (pageCount === 0 && data.hits === 0) {
               AppendErrorMsg('<p class=message>検索結果が見つかりませんでした。<br>別のキーワードで検索して下さい</p>');
               $('.pager').remove();
-            } else if ( 0 < data.hits <= 20) {
+            } else if (pageCount === 1 && 0 < data.hits <= 20 ) {
               prevButtonDisable();
               nextButtonDisable();
-            } else if (page === 1) {
+            } else if (pageCount > 1 && page === 1) {
               prevButtonDisable();
-            } else if (page === pageCount) {
+            } else if (pageCount > 1 && page === pageCount) {
               nextButtonDisable()
             }
           }).fail(function(jqXHR, textStatus, errorThrown){ //jqXHR→HTTP status code, textStatus→timeOut, parse error, errorThrown 例外処理
@@ -140,7 +144,6 @@
               AppendErrorMsg('<p class=message>リクエスト過多です。<br>しばらく時間を置いてからお試しください。</p>');
             }
           });
-        });
         }
       });
        // ページャの条件

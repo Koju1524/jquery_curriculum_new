@@ -68,6 +68,38 @@
           $(window).scrollTop(0);
         }
 
+        function getBookInfo(data) {
+          var bookHtml = '';
+            $.each (data.Items, function(index, bookInfo){
+            bookHtml = '<li class="lists__item">' +
+                              '<div class="lists__item__inner">' +
+                                '<a href='+ bookInfo.Item.itemUrl +' class="lists__item__link" target="_blank">' +
+                                  '<img src='+ bookInfo.Item.largeImageUrl +' class="lists__item__img" alt="bookImage">' +
+                                  '<p class="lists__item__detail">作品名：'+ bookInfo.Item.title +'</p>' +
+                                  '<p class="lists__item__detail">作者：'+ bookInfo.Item.author +'</p>' +
+                                  '<p class="lists__item__detail">出版社：'+ bookInfo.Item.publisherName +'</p>' +
+                                '</a>'+
+                              '</div>' +
+                            '</li>'
+            $('.lists').append(bookHtml);
+          });
+        }
+
+        function showPager(data) {
+          var currentPage = data.page;
+              pageCount = data.pageCount;
+              pagerHtml = '<div class="pager" data-js="pager">' +
+                            '<div class="counter">' +
+                              '<span class="counter-current">' + currentPage + '</span>/<span class="counter-all">' + pageCount + '</span>'+ 
+                            '</div>' +
+                            '<div class="btn-wrapper">' +
+                              '<a class="btn-item" data-js="page-prev" href="">前へ</a>' +
+                              '<a class="btn-item" data-js="page-next" href="">次へ</a>' +
+                            '</div>' +
+                          '</div>'
+          $('.lists').after(pagerHtml);
+        }
+
         var page = 1;
             pageCount = 0;
         $(document).on('click', '[data-js="page-prev"]', function(event){
@@ -103,31 +135,8 @@
             },
           }).done(function(data){
             preventOverlap();
-            $.each (data.Items, function(index, bookInfo){
-            var ItemHtml = '<li class="lists__item">' +
-                              '<div class="lists__item__inner">' +
-                                '<a href='+ bookInfo.Item.itemUrl +' class="lists__item__link" target="_blank">' +
-                                  '<img src='+ bookInfo.Item.largeImageUrl +' class="lists__item__img" alt="bookImage">' +
-                                  '<p class="lists__item__detail">作品名：'+ bookInfo.Item.title +'</p>' +
-                                  '<p class="lists__item__detail">作者：'+ bookInfo.Item.author +'</p>' +
-                                  '<p class="lists__item__detail">出版社：'+ bookInfo.Item.publisherName +'</p>' +
-                                '</a>'+
-                              '</div>' +
-                            '</li>'
-            $('.lists').append(ItemHtml);
-          });
-                var currentPage = data.page;
-                  pageCount = data.pageCount;
-                  pagerHtml = '<div class="pager" data-js="pager">' +
-                                '<div class="counter">' +
-                                  '<span class="counter-current">' + currentPage + '</span>/<span class="counter-all">' + pageCount + '</span>'+ 
-                                '</div>' +
-                                '<div class="btn-wrapper">' +
-                                  '<a class="btn-item" data-js="page-prev" href="">前へ</a>' +
-                                  '<a class="btn-item" data-js="page-next" href="">次へ</a>' +
-                                '</div>' +
-                              '</div>'
-          $('.lists').after(pagerHtml);
+            getBookInfo(data);
+            showPager(data);
             if (pageCount === 0 && data.hits === 0) {
               AppendErrorMsg('<p class=message>検索結果が見つかりませんでした。<br>別のキーワードで検索して下さい</p>');
               $('.pager').remove();

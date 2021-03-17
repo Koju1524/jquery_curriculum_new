@@ -141,15 +141,27 @@
               nextButtonDisable()
               console.log('nextButtonDisable');
             }
-          }).fail(function(jqXHR, textStatus, errorThrown){ //jqXHR→HTTP status code, textStatus→timeOut, parse error, errorThrown 例外処理
+          }).fail(function(error){ //jqXHR→HTTP status code, textStatus→timeOut, parse error, errorThrown 例外処理
             preventOverlap();
-            if (!navigator.onLine) {
-              AppendErrorMsg('<p class=message>通信に失敗しました。<br>インターネットの接続を確認して下さい。</p>');
-            } else if (jqXHR.status === 400) { //HTTP status code 400
-              AppendErrorMsg('<p class=message>検索文字が入力されていません。</p>');
-            } else if (jqXHR.status === 429) { //429大量のAPIリクエストを行うと、１秒間に受け付けるリクエスト制限値に達してリクエストが失敗する場合
-              AppendErrorMsg('<p class=message>リクエスト過多です。<br>しばらく時間を置いてからお試しください。</p>');
-            }
+            var message = '';
+              switch (error.status) {
+                case 0:
+                  message = '通信に失敗しました。<br>インターネットの接続を確認して下さい。';
+                  break;
+
+                case 400:
+                  message = '検索文字が入力されていません。';
+                  break;
+
+                case 429:
+                  message = 'リクエスト過多です。<br>しばらく時間を置いてからお試しください。';
+                  break;
+
+                default:
+                  message = '予期せぬエラーが起きました。';
+                  break;
+              }
+            $('.message').html('<p>' + message + '</p>');
           });
         }
       });

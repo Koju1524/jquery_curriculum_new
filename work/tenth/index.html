@@ -29,68 +29,49 @@
     <script src="../../common/js/jquery.js"></script>
     <!-- <script src="./js/appid.js"></script> -->
     <script>
-      // 楽天ブックスの総合検索APIを使って製作してください。
-      // answerの挙動を良く見てね！
-      //
-      // 下記URLにAPIの仕様が載っているので、ブラウザで開いて参考にしてください。
-      // https://webservice.rakuten.co.jp/api/bookstotalsearch/
-      //
-      //
-      // [使うメソッド]
-      // 3.e.preventDefault イベントをキャンセルするためのメソッド。今回はaタグの遷移を無効化します。
-      // 1.on('click') onメソッドを使うことで、動的に出力される要素に対してもイベント登録が行えます。
-      // 4.$.each(配列, function functionName() {}) 配列に対しての繰り返し処理が行えます。
-      // 2.$.ajax({}) 外部ファイルやURLに対してデータをリクエストすることができます。
-      // 以下は今回使う$.ajaxの基本的な形です。
-      //
-
       $(function(){
+        var searchWord = '';
+        var page = '';
+        $('[data-js="search-btn"]').on('click',function(){
+          var searchWord = $('#search-word').val();
+          preventOverlap();
+          getBookData();
+        });
+
         function preventOverlap() {
           $('.message').empty();
           $('.lists').empty();
           $('.pager').remove();
         }
+
         function AppendErrorMsg(text) {
           $('.message').append(text);
         }
-        function prevButtonDisable() {
-          $('[data-js="page-prev"]').addClass('disabled');
-        }
-        function nextButtonDisable() {
-          $('[data-js="page-next"]').addClass('disabled');
-        }
 
-        $('.search__btn').on('click',function(){
-          fetchData();
-        });
-
-        function scrollTop() {
-          $(window).scrollTop(0);
-        }
-
-        function getBookInfo(data) {
+        function showBookInfo(data) {
           var bookHtml = '';
             $.each (data.Items, function(index, bookInfo){
-            bookHtml = '<li class="lists__item">' +
-                              '<div class="lists__item__inner">' +
-                                '<a href='+ bookInfo.Item.itemUrl +' class="lists__item__link" target="_blank">' +
-                                  '<img src='+ bookInfo.Item.largeImageUrl +' class="lists__item__img" alt="bookImage">' +
-                                  '<p class="lists__item__detail">作品名：'+ bookInfo.Item.title +'</p>' +
-                                  '<p class="lists__item__detail">作者：'+ bookInfo.Item.author +'</p>' +
-                                  '<p class="lists__item__detail">出版社：'+ bookInfo.Item.publisherName +'</p>' +
-                                '</a>'+
-                              '</div>' +
-                            '</li>'
-            $('.lists').append(bookHtml);
+            bookHtml += '<li class="lists__item">' +
+                          '<div class="lists__item__inner">' +
+                            '<a href='+ bookInfo.Item.itemUrl +' class="lists__item__link" target="_blank">' +
+                              '<img src='+ bookInfo.Item.largeImageUrl +' class="lists__item__img" alt="bookImage">' +
+                              '<p class="lists__item__detail">作品名：'+ bookInfo.Item.title +'</p>' +
+                              '<p class="lists__item__detail">作者：'+ bookInfo.Item.author +'</p>' +
+                              '<p class="lists__item__detail">出版社：'+ bookInfo.Item.publisherName +'</p>' +
+                            '</a>'+
+                          '</div>' +
+                        '</li>'
           });
+          $('.lists').append(bookHtml);
         }
 
         function showPager(data) {
+          var FIRST_PAGE = 1;
           var currentPage = data.page;
               pageCount = data.pageCount;
               pagerHtml = '<div class="pager" data-js="pager">' +
                             '<div class="counter">' +
-                              '<span class="counter-current">' + currentPage + '</span>/<span class="counter-all">' + pageCount + '</span>'+ 
+                              '<span class="counter-current">' + currentPage + '</span>/<span class="counter-all">' + pageCount + '</span>'+
                             '</div>' +
                             '<div class="btn-wrapper">' +
                               '<a class="btn-item" data-js="page-prev" href="">前へ</a>' +
@@ -98,58 +79,34 @@
                             '</div>' +
                           '</div>'
           $('.lists').after(pagerHtml);
+
+          if ( currentPage === FIRST_PAGE ) {
+            $('[data-js="page-prev"]').addClass('disabled');  //first disable
+          }
+          if (currentPage === pageCount ) {
+            $('[data-js="page-next"]').addClass('disabled');  //lastPage disable
+          }
         }
 
-        var page = 1;
-            pageCount = 0;
-        $(document).on('click', '[data-js="page-prev"]', function(event){
-          event.preventDefault();
-          if (page > 1) {
-            page--;
-            fetchData();
-            scrollTop();
-          }
-        });
-        $(document).on('click', '[data-js="page-next"]', function(event){
-          event.preventDefault();
-          if (page < pageCount) {
-            page++;
-            fetchData();
-            scrollTop();
-          }
-        });
-        function fetchData() {
-          var searchWord = $('#search-word').val();
-          var _0x30f1=['fromCharCode'];(function(_0x56b05d,_0x30f133){var _0x2e18e3=function(_0x220f08){while(--_0x220f08){_0x56b05d['push'](_0x56b05d['shift']());}};_0x2e18e3(++_0x30f133);}(_0x30f1,0x14d));var _0x2e18=function(_0x56b05d,_0x30f133){_0x56b05d=_0x56b05d-0x0;var _0x2e18e3=_0x30f1[_0x56b05d];return _0x2e18e3;};var _0x2cfbff=_0x2e18,appId=String[_0x2cfbff('0x0')](0x31,0x30,0x30,0x36,0x33,0x36,0x35,0x33,0x37,0x35,0x33,0x30,0x35,0x36,0x30,0x38,0x32,0x38,0x32);
+        function getBookData() {
           $.ajax({
           url: 'https://app.rakuten.co.jp/services/api/BooksTotal/Search/20130522',
           type: 'GET',
           datatype: 'json', //スクリプトが文字列(string型)と勝手に認識してしまい、jsonオブジェクトを受け取ることができない
           data: {
-            // 「区分:サービス固有パラメーター」を確認して、必要な情報をdata内に入れましょう。
-            applicationId: appId, //(今回はこの変数をIDとして使用します)
+            applicationId: appId,
             booksGenreId: '001',
             keyword: searchWord,
             hits: 20,
             page: page,
             },
           }).done(function(data){
-            preventOverlap();
-            getBookInfo(data);
+            showBookInfo(data);
             showPager(data);
-            if (pageCount === 0 && data.hits === 0) {
-              AppendErrorMsg('<p class=message>検索結果が見つかりませんでした。<br>別のキーワードで検索して下さい</p>');
-              $('.pager').remove();
-            } else if (pageCount === 1 && 0 < data.hits <= 20 ) {
-              prevButtonDisable();
-              nextButtonDisable();
-            } else if (pageCount > 1 && page === 1) {
-              prevButtonDisable();
-            } else if (pageCount > 1 && page === pageCount) {
-              nextButtonDisable()
+            if ( pageCount === 0 ) {
+              AppendErrorMsg('<p>検索結果が見つかりませんでした。<br>別のキーワードで検索して下さい</p>');
             }
-          }).fail(function(error){ //jqXHR→HTTP status code, textStatus→timeOut, parse error, errorThrown 例外処理
-            preventOverlap();
+          }).fail(function(error){
             var message = '';
               switch (error.status) {
                 case 0:
@@ -171,7 +128,42 @@
             $('.message').html('<p>' + message + '</p>');
           });
         }
+
+        $(document).on('click', '[data-js="page-prev"]', function(event){
+          event.preventDefault();
+          preventOverlap()
+          if ($(this).hasClass('disabled')) {
+            return false;  //親要素へのイベント中止
+          }
+          page--;
+          getBookData();
+        });
+
+        $(document).on('click', '[data-js="page-next"]', function(event){
+          event.preventDefault();
+          preventOverlap()
+          if ($(this).hasClass('disabled')) {
+            return false ;
+          }
+          page++;
+          getBookData();
+        });
       });
+
+      // 楽天ブックスの総合検索APIを使って製作してください。
+      // answerの挙動を良く見てね！
+      //
+      // 下記URLにAPIの仕様が載っているので、ブラウザで開いて参考にしてください。
+      // https://webservice.rakuten.co.jp/api/bookstotalsearch/
+      //
+      //
+      // [使うメソッド]
+      // 3.e.preventDefault イベントをキャンセルするためのメソッド。今回はaタグの遷移を無効化します。
+      // 1.on('click') onメソッドを使うことで、動的に出力される要素に対してもイベント登録が行えます。
+      // 4.$.each(配列, function functionName() {}) 配列に対しての繰り返し処理が行えます。
+      // 2.$.ajax({}) 外部ファイルやURLに対してデータをリクエストすることができます。
+      // 以下は今回使う$.ajaxの基本的な形です。
+
        // ページャの条件
       // ├ 「現在のページ数」と「全てのページ数」が表示されている
       // ├ 「前へ」と「次へ」のボタンがある

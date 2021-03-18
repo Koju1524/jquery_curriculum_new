@@ -17,7 +17,7 @@
         </div>
         <div class="search">
           <div class="search__text">
-            <input type="text" id="search-word" class="search__text__input" placeholder="検索する" data-js="search-word">
+            <input type="text" class="search__text__input" placeholder="検索する" data-js="search-word">
           </div>
           <button class="search__btn" data-js="search-btn">検索する</button>
         </div>
@@ -27,21 +27,16 @@
       </div>
     </div>
     <script src="../../common/js/jquery.js"></script>
-    <!-- <script src="./js/appid.js"></script> -->
+    <script src="./js/appid.js"></script>
     <script>
       $(function(){
         var searchWord = '';
-        var page = 1;
+        //var page = 1;
         $(document).on('click', '[data-js="page-prev"]', function(event){
           event.preventDefault();
           if ($(this).hasClass('disabled')) {
-            return false;  //親要素へのイベント中止
+            return false;
           }
-          // if ( page > 1 ) {
-          //   page--;
-          //   preventOverlap();
-          //   getBookData();
-          // }
           page--;
           preventOverlap();
           getBookData();
@@ -50,27 +45,22 @@
         $(document).on('click', '[data-js="page-next"]', function(event){
           event.preventDefault();
           if ($(this).hasClass('disabled')) {
-            return false ;
+            return false;
           }
           page++;
           preventOverlap();
           getBookData();
-
-          // if ( page < data.pageCount ) {
-          //   page--;
-          //   preventOverlap();
-          //   getBookData();
-          // }
         });
+
         $('[data-js="search-btn"]').on('click',function(){
-          var searchWord = $('#search-word').val();
+          searchWord = $('[data-js="search-word"]').val();
+          page = 1;
           preventOverlap();
-          console.log(searchWord);
           getBookData();
         });
 
         function AppendErrorMsg(text) {
-          $('.message').append(text);
+          $('.message').append('<p>' + text + '</p>');
         }
 
         function preventOverlap() {
@@ -99,14 +89,14 @@
         function showPager(data) {
           var FIRST_PAGE = 1;
           var currentPage = data.page;
-              pageCount = data.pageCount;
+          var pageCount = data.pageCount;
               pagerHtml = '<div class="pager" data-js="pager">' +
                             '<div class="counter">' +
                               '<span class="counter-current">' + currentPage + '</span>/<span class="counter-all">' + pageCount + '</span>'+
                             '</div>' +
                             '<div class="btn-wrapper">' +
-                              '<a class="btn-item" data-js="page-prev" href="">前へ</a>' +
-                              '<a class="btn-item" data-js="page-next" href="">次へ</a>' +
+                              '<a class="btn-item" data-js="page-prev" href="#">前へ</a>' +
+                              '<a class="btn-item" data-js="page-next" href="#">次へ</a>' +
                             '</div>' +
                           '</div>';
           $('.lists').after(pagerHtml);
@@ -120,7 +110,6 @@
         }
 
         function getBookData() {
-          var _0x30f1=['fromCharCode'];(function(_0x56b05d,_0x30f133){var _0x2e18e3=function(_0x220f08){while(--_0x220f08){_0x56b05d['push'](_0x56b05d['shift']());}};_0x2e18e3(++_0x30f133);}(_0x30f1,0x14d));var _0x2e18=function(_0x56b05d,_0x30f133){_0x56b05d=_0x56b05d-0x0;var _0x2e18e3=_0x30f1[_0x56b05d];return _0x2e18e3;};var _0x2cfbff=_0x2e18,appId=String[_0x2cfbff('0x0')](0x31,0x30,0x30,0x36,0x33,0x36,0x35,0x33,0x37,0x35,0x33,0x30,0x35,0x36,0x30,0x38,0x32,0x38,0x32);
           $.ajax({
           url: 'https://app.rakuten.co.jp/services/api/BooksTotal/Search/20130522',
           type: 'GET',
@@ -133,33 +122,32 @@
             page: page,
             },
           }).done(function(data){
-            console.log(data);
             if ( data.hits === 0 ) {
-              AppendErrorMsg('<p>検索結果が見つかりませんでした。<br>別のキーワードで検索して下さい</p>');
+              AppendErrorMsg('検索結果が見つかりませんでした。<br>別のキーワードで検索して下さい');
             } else {
               showBookInfo(data);
               showPager(data);
             }
           }).fail(function(error){
-            var message = '';
-              switch (error.status) {
-                case 0:
-                  message = '通信に失敗しました。<br>インターネットの接続を確認して下さい。';
-                  break;
+            preventOverlap();
+            switch (error.status) {
+              case 0:
+                AppendErrorMsg('通信に失敗しました。<br>インターネットの接続を確認して下さい。');
+                break;
 
-                case 400:
-                  message = '検索文字が入力されていません。';
-                  break;
+              case 400:
+                AppendErrorMsg('検索文字が入力されていません。');
+                break;
 
-                case 429:
-                  message = 'リクエスト過多です。<br>しばらく時間を置いてからお試しください。';
-                  break;
+              case 429:
+                AppendErrorMsg('リクエスト過多です。<br>しばらく時間を置いてからお試しください。');
 
-                default:
-                  message = '予期せぬエラーが起きました。';
-                  break;
-              }
-            $('.message').html('<p>' + message + '</p>');
+                break;
+
+              default:
+                AppendErrorMsg('予期せぬエラーが起きました。');
+                break;
+            }
           });
         }
       });

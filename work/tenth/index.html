@@ -31,23 +31,23 @@
     <script>
       $(function(){
         var searchWord = '';
-        //var page = 1;
-        $(document).on('click', '[data-js="page-prev"]', function(event){
+        var page = null; //初期値と再代入を見分けるため。
+        $(document).on('click', '[data-js="page-prev"]', function(event) {
           event.preventDefault();
           if ($(this).hasClass('disabled')) {
             return false;
           }
-          page--;
+          page--; //page = page - 1; decrement
           preventOverlap();
           getBookData();
         });
 
-        $(document).on('click', '[data-js="page-next"]', function(event){
+        $(document).on('click', '[data-js="page-next"]', function(event) {
           event.preventDefault();
           if ($(this).hasClass('disabled')) {
-            return false;
+            return false; //if以下の下の３つの処理を止めている。
           }
-          page++;
+          page++; //page = page + 1; increment
           preventOverlap();
           getBookData();
         });
@@ -69,16 +69,16 @@
           $('.pager').remove();
         }
 
-        function showBookInfo(data) {
+        function showBookInfo(data) {  //data response
           var bookHtml = '';
-            $.each (data.Items, function(index, bookInfo){
+          $.each (data.Items, function(index, bookInfo) {
             bookHtml += '<li class="lists__item">' +
                           '<div class="lists__item__inner">' +
-                            '<a href='+ bookInfo.Item.itemUrl +' class="lists__item__link" target="_blank">' +
-                              '<img src='+ bookInfo.Item.largeImageUrl +' class="lists__item__img" alt="bookImage">' +
-                              '<p class="lists__item__detail">作品名：'+ bookInfo.Item.title +'</p>' +
-                              '<p class="lists__item__detail">作者：'+ bookInfo.Item.author +'</p>' +
-                              '<p class="lists__item__detail">出版社：'+ bookInfo.Item.publisherName +'</p>' +
+                            '<a href=' + bookInfo.Item.itemUrl + ' class="lists__item__link" target="_blank">' +
+                              '<img src=' + bookInfo.Item.largeImageUrl + ' class="lists__item__img" alt="bookImage">' +
+                              '<p class="lists__item__detail">作品名：' + bookInfo.Item.title + '</p>' +
+                              '<p class="lists__item__detail">作者：' + bookInfo.Item.author + '</p>' +
+                              '<p class="lists__item__detail">出版社：' + bookInfo.Item.publisherName + '</p>' +
                             '</a>'+
                           '</div>' +
                         '</li>';
@@ -90,7 +90,7 @@
           var FIRST_PAGE = 1;
           var currentPage = data.page;
           var pageCount = data.pageCount;
-              pagerHtml = '<div class="pager" data-js="pager">' +
+          var pagerHtml = '<div class="pager" data-js="pager">' +
                             '<div class="counter">' +
                               '<span class="counter-current">' + currentPage + '</span>/<span class="counter-all">' + pageCount + '</span>'+
                             '</div>' +
@@ -101,28 +101,50 @@
                           '</div>';
           $('.lists').after(pagerHtml);
 
-          if ( currentPage === FIRST_PAGE ) {
+          if (currentPage === FIRST_PAGE) {
             $('[data-js="page-prev"]').addClass('disabled');  //first disable
           }
-          if (currentPage === pageCount ) {
+          if (currentPage === pageCount) {
             $('[data-js="page-next"]').addClass('disabled');  //lastPage disable
           }
         }
 
+        function failErrorMsg(error) {
+          var message = '';
+          switch (error.status) {
+            case 0:
+              message = '通信に失敗しました。<br>インターネットの接続を確認して下さい。'
+              break;
+
+            case 400:
+              message = '検索文字が入力されていません。'
+              break;
+
+            case 429:
+              message = 'リクエスト過多です。<br>しばらく時間を置いてからお試しください'
+              break;
+
+            default:
+              message = '予期せぬエラーが起きました。';
+              break;
+          }
+          AppendErrorMsg(message);
+        }
+
         function getBookData() {
           $.ajax({
-          url: 'https://app.rakuten.co.jp/services/api/BooksTotal/Search/20130522',
-          type: 'GET',
-          datatype: 'json', //スクリプトが文字列(string型)と勝手に認識してしまい、jsonオブジェクトを受け取ることができない
-          data: {
-            applicationId: appId,
-            booksGenreId: '001',
-            keyword: searchWord,
-            hits: 20,
-            page: page,
+            url: 'https://app.rakuten.co.jp/services/api/BooksTotal/Search/20130522',
+            type: 'GET', //query string parameter of URL
+            datatype: 'json', //スクリプトが文字列(string型)と勝手に認識してしまい、jsonオブジェクトを受け取ることができない
+            data: {
+              applicationId: appId,
+              booksGenreId: '001',
+              keyword: searchWord,
+              hits: 20,
+              page: page,
             },
           }).done(function(data){
-            if ( data.hits === 0 ) {
+            if (data.hits === 0) {
               AppendErrorMsg('検索結果が見つかりませんでした。<br>別のキーワードで検索して下さい');
             } else {
               showBookInfo(data);
@@ -130,24 +152,7 @@
             }
           }).fail(function(error){
             preventOverlap();
-            switch (error.status) {
-              case 0:
-                AppendErrorMsg('通信に失敗しました。<br>インターネットの接続を確認して下さい。');
-                break;
-
-              case 400:
-                AppendErrorMsg('検索文字が入力されていません。');
-                break;
-
-              case 429:
-                AppendErrorMsg('リクエスト過多です。<br>しばらく時間を置いてからお試しください。');
-
-                break;
-
-              default:
-                AppendErrorMsg('予期せぬエラーが起きました。');
-                break;
-            }
+            failErrorMsg(error);
           });
         }
       });
